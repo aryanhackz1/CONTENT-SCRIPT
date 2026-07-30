@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>EverHacks · Pro</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,1" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0b0d11;
+      color: #eef2f8;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px 12px 40px;
+    }
+    .app-container { max-width: 560px; width: 100%; }
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding: 0 4px;
+    }
+    .app-header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(145deg, #b7a6ff, #7aa2f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .app-header h1 span { -webkit-text-fill-color: initial; color: #a78bfa; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .toggle-btn {
+      background: #1f2633;
+      border: 1px solid #2d3547;
+      color: #bcc9e6;
+      padding: 6px 14px;
+      border-radius: 40px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .toggle-btn:active { background: #2d3648; }
+    .toggle-btn.active { background: #2a3a5a; border-color: #4f72b3; color: #c8d8ff; }
+    .badge-cat {
+      background: #1b2539;
+      padding: 4px 16px;
+      border-radius: 40px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #b3c7f0;
+      border: 1px solid #33415e;
+    }
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin: 18px 0 24px;
+    }
+    .cat-card {
+      background: #151b24;
+      border-radius: 24px;
+      padding: 16px 6px 14px;
+      text-align: center;
+      border: 1px solid #28303f;
+      box-shadow: 0 10px 18px -8px rgba(0,0,0,0.7);
+      transition: all 0.15s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 88px;
+    }
+    .cat-card:active { transform: scale(0.96); background: #1e2633; border-color: #4b5a7a; }
+    .cat-emoji { font-size: 34px; line-height: 1.2; }
+    .cat-label {
+      font-weight: 500;
+      font-size: 12px;
+      background: #212a38;
+      padding: 4px 10px;
+      border-radius: 30px;
+      margin-top: 6px;
+      color: #c8d4e8;
+      white-space: nowrap;
+      max-width: 90%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .panel {
+      background: #121820;
+      border-radius: 32px;
+      padding: 18px 14px;
+      margin: 14px 0 18px;
+      border: 1px solid #252e3d;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);
+    }
+    .topic-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .topic-grid::-webkit-scrollbar { width: 4px; }
+    .topic-grid::-webkit-scrollbar-track { background: #1a212b; border-radius: 10px; }
+    .topic-grid::-webkit-scrollbar-thumb { background: #3f506e; border-radius: 10px; }
+    .topic-card {
+      background: #1c232f;
+      padding: 12px 14px;
+      border-radius: 18px;
+      border-left: 4px solid #5d79b5;
+      transition: 0.1s ease;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+      user-select: none;
+      -webkit-user-select: none;
+      position: relative;
+    }
+    .topic-card:active { background: #282f3f; transform: scale(0.99); }
+    .topic-card.done { border-left-color: #4caf84; }
+    .topic-card.notdone { border-left-color: #b05a6a; }
+    .topic-card.selected {
+      border-left-color: #b388ff !important;
+      background: #252f42 !important;
+      box-shadow: 0 0 0 2px #6d8fd1;
+    }
+    .topic-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: #e7edf9;
+      line-height: 1.4;
+      word-break: break-word;
+      padding-right: 36px;
+    }
+    .topic-sub {
+      font-size: 13px;
+      color: #9baccf;
+      margin-top: 4px;
+      padding-left: 12px;
+      border-left: 2px solid #3f4b66;
+      padding-left: 10px;
+      opacity: 0.85;
+      font-style: italic;
+      padding-right: 36px;
+    }
+    .topic-status {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 14px;
+    }
+    .topic-script-icon {
+      position: absolute;
+      bottom: 8px;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      opacity: 0.7;
+      transition: 0.15s;
+    }
+    .topic-script-icon:hover { opacity: 1; }
+    .topic-script-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: brightness(0.9) drop-shadow(0 0 4px rgba(100,150,255,0.3));
+    }
+    .topic-script-icon.hidden-icon { display: none; }
+    .empty-state {
+      color: #5e6f8f;
+      text-align: center;
+      padding: 28px 0;
+      font-size: 15px;
+    }
+    .back-link {
+      color: #93a7ce;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      padding: 6px 16px;
+      background: #181f2b;
+      border-radius: 40px;
+      border: 1px solid #2e384b;
+      font-weight: 500;
+      transition: 0.1s;
+    }
+    .back-link:active { background: #262f40; }
+    .flex-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .topic-count {
+      background: #1b2332;
+      padding: 2px 14px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #9fb1db;
+    }
+    .footer-note {
+      margin-top: 16px;
+      color: #42506a;
+      font-size: 12px;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+    .material-symbols-rounded {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0;
+      font-size: 22px;
+    }
+    .hidden { display: none !important; }
+
+    /* POPUP MODAL */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.hidden { display: none !important; }
+    .modal-box {
+      background: #151d28;
+      border-radius: 32px;
+      max-width: 480px;
+      width: 100%;
+      padding: 24px 22px 28px;
+      border: 1px solid #2f3a4f;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      background: #242e3f;
+      border: none;
+      color: #b8c8e8;
+      font-size: 28px;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.15s;
+      border: 1px solid #3d4a63;
+    }
+    .modal-close:active { background: #37445c; transform: scale(0.92); }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #e8effa;
+      margin-bottom: 6px;
+      padding-right: 40px;
+    }
+    .modal-sub {
+      font-size: 14px;
+      color: #8fa4d0;
+      margin-bottom: 16px;
+      padding-left: 4px;
+      border-left: 3px solid #4f6a9e;
+      padding-left: 12px;
+    }
+    .modal-field {
+      margin-bottom: 16px;
+    }
+    .modal-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #8fa4d0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .modal-field .content-box {
+      background: #0c111c;
+      border-radius: 16px;
+      padding: 12px 16px;
+      color: #dce4f0;
+      font-size: 14px;
+      line-height: 1.6;
+      border: 1px solid #26303f;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      max-height: 150px;
+      overflow-y: auto;
+      position: relative;
+    }
+    .modal-field .content-box .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: #1e283b;
+      border: none;
+      color: #9bb0db;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid #36435e;
+    }
+    .modal-field .content-box .copy-btn:active { background: #2c384f; }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: #242d3d;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 13px;
+      color: #eef3ff;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: 0.12s;
+      border: 1px solid #36435c;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: #34508a; border-color: #4f72b3; color: white; }
+    .btn-success { background: #2a6b4a; border-color: #3d9668; }
+    .btn-secondary { background: #202837; border-color: #35425a; }
+    .btn-danger { background: #752f3f; border-color: #9f4a5e; }
+
+    /* readonly mode - hide edit UI */
+    .readonly-mode .edit-ui { display: none !important; }
+    .readonly-mode .topic-card { cursor: default; }
+    .edit-ui { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container" id="app">
+  <!-- header -->
+  <div class="app-header">
+    <h1><span class="material-symbols-rounded" style="font-size:32px;">bolt</span> EverHacks</h1>
+    <div class="header-actions">
+      <button class="toggle-btn" id="readonlyToggle"><span class="material-symbols-rounded" style="font-size:18px;">visibility</span> Read Only</button>
+      <span class="badge-cat" id="headerCategoryBadge">A</span>
+    </div>
+  </div>
+
+  <!-- CATEGORY VIEW -->
+  <div id="categoryView">
+    <div class="category-grid" id="categoryGrid"></div>
+    <div style="padding: 0 6px; opacity:0.7; font-size:13px; color:#5d6e8f;">Select category → manage topics</div>
+  </div>
+
+  <!-- TOPIC VIEW -->
+  <div id="topicView" class="hidden">
+    <div class="flex-row" style="margin-bottom: 10px;">
+      <span class="back-link" id="backToCategory"><span class="material-symbols-rounded" style="font-size:20px;">arrow_back</span> Back</span>
+      <span class="topic-count" id="topicCount">0 topics</span>
+    </div>
+
+    <div class="panel">
+      <div class="flex-row" style="margin-bottom: 10px;">
+        <span style="font-weight: 600; font-size: 16px;">📋 Topics</span>
+        <span style="font-size:12px; color:#6f83aa;" id="statusSummary">● 0 done</span>
+      </div>
+      <div class="topic-grid" id="topicGrid"></div>
+    </div>
+
+    <!-- EDIT UI (hidden in readonly) -->
+    <div class="edit-ui">
+      <div style="background:#0f141d; border-radius:28px; padding:16px; border:1px solid #26303f; margin-top:14px;">
+        <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">
+          <span class="material-symbols-rounded" style="color:#8ba1d4;">edit_document</span>
+          <span style="font-weight:500; font-size:14px; color:#c2d0ed;">Edit Topic</span>
+          <span style="margin-left:auto; font-size:12px; color:#5f7297;" id="selectedTopicIndex">#—</span>
+        </div>
+        <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+          <button class="btn btn-success" id="markDoneBtn" style="flex:1;"><span class="material-symbols-rounded">check_circle</span> Mark Done</button>
+          <button class="btn btn-secondary" id="markUndoneBtn" style="flex:1;"><span class="material-symbols-rounded">cancel</span> Mark Undone</button>
+        </div>
+        <label class="field-label" style="font-size:12px; font-weight:500; color:#8fa4d0; display:block; margin:6px 0 4px 4px;">📝 Caption (Video Title)</label>
+        <textarea id="captionInput" placeholder="Write caption..." style="width:100%; background:#090c13; border:1px solid #283244; border-radius:20px; padding:12px 16px; color:#e8effa; font-size:14px; font-family:inherit; resize:vertical; min-height:50px; outline:none; line-height:1.6; margin-bottom:6px;"></textarea>
+        <label class="field-label" style="font-size:12px; font-weight:500; color:#8fa4d0; display:block; margin:6px 0 4px 4px;">📜 Script (Full Content)</label>
+        <textarea id="scriptInput" placeholder="Write script..." style="width:100%; background:#090c13; border:1px solid #283244; border-radius:20px; padding:12px 16px; color:#e8effa; font-size:14px; font-family:inherit; resize:vertical; min-height:80px; outline:none; line-height:1.6;"></textarea>
+        <div class="action-row" style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+          <button class="btn btn-primary" id="saveTopicBtn"><span class="material-symbols-rounded">save</span> Save</button>
+          <button class="btn btn-secondary" id="clearSelectionBtn"><span class="material-symbols-rounded">deselect</span> Deselect</button>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <button class="btn btn-secondary" id="importTopicsBtn" style="flex:1;"><span class="material-symbols-rounded">content_paste</span> Import Topics</button>
+        </div>
+        <div style="margin-top:6px; font-size:11px; color:#5f7297; text-align:center;">Long press on topic → select for editing</div>
+      </div>
+    </div>
+    <div style="margin-top: 8px; text-align: right;">
+      <span style="background:#141c2a; padding:2px 18px; border-radius:40px; font-size:11px; color:#7a8fb5; border:1px solid #253040;">⚡ Firebase sync</span>
+    </div>
+  </div>
+  <div class="footer-note">tap topic → view caption & script in popup • long press → select for edit</div>
+</div>
+
+<!-- MODAL POPUP -->
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-title" id="modalTitle">Topic Title</div>
+    <div class="modal-sub" id="modalSub">→ Subtext</div>
+    <div class="modal-field">
+      <label>📝 Caption</label>
+      <div class="content-box" id="modalCaption">
+        <span>No caption</span>
+        <button class="copy-btn" id="modalCaptionCopy"></button>
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>📜 Script</label>
+      <div class="content-box" id="modalScript">
+        <span>No script</span>
+        <button class="copy-btn" id="modalScriptCopy"></button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modalCloseBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyDEHsTn_ZqQC9HtHObgIEFMyTJxd0TP3d8",
+    authDomain: "evergreen-content.firebaseapp.com",
+    databaseURL: "https://evergreen-content-default-rtdb.firebaseio.com",
+    projectId: "evergreen-content",
+    storageBucket: "evergreen-content.firebasestorage.app",
+    messagingSenderId: "80595365762",
+    appId: "1:80595365762:web:16140371a5dd73f084a99b"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const categories = [
+    { id: 'A', label: 'Smartphone Hacks', emoji: '🚀' },
+    { id: 'B', label: 'Laptop & PC Hacks', emoji: '💻' },
+    { id: 'C', label: 'Web Tools', emoji: '🤖' },
+    { id: 'D', label: 'Hidden App Tricks', emoji: '🛠️' },
+    { id: 'E', label: 'Buying Guide', emoji: '🛍️' },
+    { id: 'F', label: 'Creator & Editing', emoji: '🎬' },
+    { id: 'G', label: 'OSINT & Invest.', emoji: '🔍' },
+    { id: 'H', label: 'Freelancing Tools', emoji: '💼' },
+    { id: 'I', label: 'Smart Home', emoji: '🏠' },
+    { id: 'J', label: 'Security & Scams', emoji: '🛡️' }
+  ];
+
+  let currentCategoryId = 'A';
+  let topics = [];
+  let selectedIndex = -1;
+  let readonlyMode = false;
+
+  // DOM
+  const categoryGrid = document.getElementById('categoryGrid');
+  const topicView = document.getElementById('topicView');
+  const categoryView = document.getElementById('categoryView');
+  const topicGrid = document.getElementById('topicGrid');
+  const captionInput = document.getElementById('captionInput');
+  const scriptInput = document.getElementById('scriptInput');
+  const topicCount = document.getElementById('topicCount');
+  const statusSummary = document.getElementById('statusSummary');
+  const selectedTopicIndex = document.getElementById('selectedTopicIndex');
+  const backBtn = document.getElementById('backToCategory');
+  const saveBtn = document.getElementById('saveTopicBtn');
+  const markDoneBtn = document.getElementById('markDoneBtn');
+  const markUndoneBtn = document.getElementById('markUndoneBtn');
+  const readonlyToggle = document.getElementById('readonlyToggle');
+  const headerCategoryBadge = document.getElementById('headerCategoryBadge');
+  const importBtn = document.getElementById('importTopicsBtn');
+  const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+
+  // Modal
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalClose = document.getElementById('modalClose');
+  const modalCloseBtn = document.getElementById('modalCloseBtn');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalSub = document.getElementById('modalSub');
+  const modalCaption = document.getElementById('modalCaption');
+  const modalScript = document.getElementById('modalScript');
+  const modalCaptionCopy = document.getElementById('modalCaptionCopy');
+  const modalScriptCopy = document.getElementById('modalScriptCopy');
+
+  const SCRIPT_ICON_URL = 'https://uploads.onecompiler.io/43vywcru4/1785439141897/free-script-icon-svg-download-png-1665665.webp';
+
+  // ---- READONLY STATE PERSISTENCE ----
+  function saveReadonlyState(state) {
+    localStorage.setItem('everhacks_readonly', state ? 'true' : 'false');
+  }
+
+  function loadReadonlyState() {
+    return localStorage.getItem('everhacks_readonly') === 'true';
+  }
+
+  // ---- RENDER CATEGORIES ----
+  function renderCategories() {
+    categoryGrid.innerHTML = '';
+    categories.forEach(cat => {
+      const card = document.createElement('div');
+      card.className = 'cat-card';
+      card.innerHTML = `<div class="cat-emoji">${cat.emoji}</div><div class="cat-label">${cat.id} · ${cat.label}</div>`;
+      card.addEventListener('click', () => {
+        currentCategoryId = cat.id;
+        headerCategoryBadge.textContent = cat.id;
+        loadTopicsFromFirebase(cat.id);
+        showTopicView();
+      });
+      categoryGrid.appendChild(card);
+    });
+  }
+
+  // ---- VIEW TOGGLE ----
+  function showTopicView() {
+    categoryView.classList.add('hidden');
+    topicView.classList.remove('hidden');
+    headerCategoryBadge.textContent = currentCategoryId;
+    loadTopicsFromFirebase(currentCategoryId);
+    applyReadonlyMode();
+  }
+  function showCategoryView() {
+    topicView.classList.add('hidden');
+    categoryView.classList.remove('hidden');
+    selectedIndex = -1;
+    captionInput.value = '';
+    scriptInput.value = '';
+    selectedTopicIndex.textContent = '#—';
+  }
+  backBtn.addEventListener('click', showCategoryView);
+
+  // ---- READONLY TOGGLE ----
+  readonlyToggle.addEventListener('click', () => {
+    readonlyMode = !readonlyMode;
+    readonlyToggle.classList.toggle('active', readonlyMode);
+    readonlyToggle.innerHTML = readonlyMode 
+      ? `<span class="material-symbols-rounded" style="font-size:18px;">lock</span> Read Only` 
+      : `<span class="material-symbols-rounded" style="font-size:18px;">visibility</span> Read Only`;
+    saveReadonlyState(readonlyMode);
+    applyReadonlyMode();
+    if (readonlyMode) {
+      selectedIndex = -1;
+      captionInput.value = '';
+      scriptInput.value = '';
+      selectedTopicIndex.textContent = '#—';
+      document.querySelectorAll('.topic-card').forEach(el => el.classList.remove('selected'));
+    }
+  });
+
+  function applyReadonlyMode() {
+    const container = document.getElementById('app');
+    if (readonlyMode) {
+      container.classList.add('readonly-mode');
+    } else {
+      container.classList.remove('readonly-mode');
+    }
+  }
+
+  // ---- FIREBASE LOAD ----
+  function loadTopicsFromFirebase(categoryId) {
+    const ref = db.ref(`categories/${categoryId}/topics`);
+    ref.once('value').then(snapshot => {
+      const data = snapshot.val();
+      if (data && Array.isArray(data) && data.length) {
+        topics = data.map(item => ({
+          title: item.title || 'Untitled',
+          script: item.script || '',
+          caption: item.caption || '',
+          explanation: item.explanation || '',
+          done: item.done === true
+        }));
+      } else {
+        topics = [];
+      }
+      renderTopics();
+      selectedIndex = -1;
+      captionInput.value = '';
+      scriptInput.value = '';
+      selectedTopicIndex.textContent = '#—';
+    }).catch(() => { topics = []; renderTopics(); });
+  }
+
+  // ---- SAVE TO FIREBASE ----
+  function saveTopicsToFirebase(categoryId, topicsArray) {
+    const ref = db.ref(`categories/${categoryId}/topics`);
+    ref.set(topicsArray).catch(err => alert('Firebase error: ' + err.message));
+  }
+
+  // ---- RENDER TOPICS ----
+  function renderTopics() {
+    topicGrid.innerHTML = '';
+    if (!topics || topics.length === 0) {
+      topicGrid.innerHTML = `<div class="empty-state">✨ No topics yet. Import or add topics.</div>`;
+      topicCount.textContent = '0 topics';
+      statusSummary.textContent = '● 0 done';
+      return;
+    }
+    let doneCount = 0;
+    topics.forEach((topic, idx) => {
+      if (topic.done) doneCount++;
+      const card = document.createElement('div');
+      card.className = 'topic-card';
+      if (topic.done) card.classList.add('done');
+      else card.classList.add('notdone');
+      if (selectedIndex === idx) card.classList.add('selected');
+      
+      const explanationText = topic.explanation || '';
+      
+      // Check if script or caption is filled
+      const hasContent = (topic.script && topic.script.trim() !== '') || (topic.caption && topic.caption.trim() !== '');
+      
+      card.innerHTML = `
+        <div class="topic-title">
+          ${idx+1}. ${topic.title || 'Untitled'}
+          <span class="topic-status">${topic.done ? '✅' : '⏳'}</span>
+        </div>
+        ${explanationText ? `<div class="topic-sub">→ ${explanationText}</div>` : ''}
+        <div class="topic-script-icon ${hasContent ? '' : 'hidden-icon'}">
+          <img src="${SCRIPT_ICON_URL}" alt="script" loading="lazy" />
+        </div>
+      `;
+      
+      // Tap = open modal (view only)
+      card.addEventListener('click', (e) => {
+        if (!readonlyMode && e.detail > 1) return;
+        openModal(topic, idx);
+      });
+      
+      // Long press = select for editing (only when not readonly)
+      let longPressTimer = null;
+      card.addEventListener('pointerdown', (e) => {
+        if (readonlyMode) return;
+        longPressTimer = setTimeout(() => {
+          selectTopic(idx);
+          navigator.vibrate && navigator.vibrate(30);
+        }, 500);
+      });
+      card.addEventListener('pointerup', () => { clearTimeout(longPressTimer); });
+      card.addEventListener('pointerleave', () => { clearTimeout(longPressTimer); });
+      
+      topicGrid.appendChild(card);
+    });
+    topicCount.textContent = `${topics.length} topics`;
+    statusSummary.textContent = `● ${doneCount}/${topics.length} done`;
+  }
+
+  // ---- SELECT TOPIC FOR EDIT ----
+  function selectTopic(index) {
+    if (readonlyMode) return;
+    if (index < 0 || index >= topics.length) return;
+    selectedIndex = index;
+    document.querySelectorAll('.topic-card').forEach((el, i) => {
+      el.classList.toggle('selected', i === index);
+    });
+    captionInput.value = topics[index].caption || '';
+    scriptInput.value = topics[index].script || '';
+    selectedTopicIndex.textContent = `#${index+1}`;
+  }
+
+  // ---- CLEAR SELECTION ----
+  function clearSelection() {
+    selectedIndex = -1;
+    captionInput.value = '';
+    scriptInput.value = '';
+    selectedTopicIndex.textContent = '#—';
+    document.querySelectorAll('.topic-card').forEach(el => el.classList.remove('selected'));
+  }
+  clearSelectionBtn.addEventListener('click', clearSelection);
+
+  // ---- MODAL ----
+  let currentModalTopic = null;
+  let currentModalIndex = -1;
+
+  function openModal(topic, index) {
+    currentModalTopic = topic;
+    currentModalIndex = index;
+    modalTitle.textContent = `${index+1}. ${topic.title || 'Untitled'}`;
+    modalSub.textContent = topic.explanation ? `→ ${topic.explanation}` : 'No explanation';
+    
+    // Caption
+    const captionSpan = modalCaption.querySelector('span');
+    captionSpan.textContent = topic.caption || 'No caption';
+    
+    // Script
+    const scriptSpan = modalScript.querySelector('span');
+    scriptSpan.textContent = topic.script || 'No script';
+    
+    modalOverlay.classList.remove('hidden');
+  }
+
+  // Copy handlers for modal
+  modalCaptionCopy.addEventListener('', (e) => {
+    e.stopPropagation();
+    if (currentModalTopic) {
+      copyText(currentModalTopic.caption || '');
+    }
+  });
+
+  modalScriptCopy.addEventListener('', (e) => {
+    e.stopPropagation();
+    if (currentModalTopic) {
+      copyText(currentModalTopic.script || '');
+    }
+  });
+
+  function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.activeElement;
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = orig, 1200);
+      }
+    }).catch(() => alert('Copy failed'));
+  }
+
+  function closeModal() {
+    modalOverlay.classList.add('hidden');
+    currentModalTopic = null;
+    currentModalIndex = -1;
+  }
+  modalClose.addEventListener('click', closeModal);
+  modalCloseBtn.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  // ---- SAVE CURRENT TOPIC ----
+  function saveCurrentTopic() {
+    if (selectedIndex < 0 || selectedIndex >= topics.length) {
+      alert('Long press on a topic to select it first.');
+      return;
+    }
+    const caption = captionInput.value.trim();
+    const script = scriptInput.value.trim();
+    topics[selectedIndex].caption = caption;
+    topics[selectedIndex].script = script;
+    saveTopicsToFirebase(currentCategoryId, topics);
+    renderTopics();
+    document.querySelectorAll('.topic-card').forEach((el, i) => {
+      el.classList.toggle('selected', i === selectedIndex);
+    });
+    selectedTopicIndex.textContent = `#${selectedIndex+1} ✓`;
+  }
+
+  function markDone() {
+    if (selectedIndex < 0 || selectedIndex >= topics.length) { 
+      alert('Long press on a topic to select it first.'); 
+      return; 
+    }
+    topics[selectedIndex].done = true;
+    saveTopicsToFirebase(currentCategoryId, topics);
+    renderTopics();
+    document.querySelectorAll('.topic-card').forEach((el, i) => {
+      el.classList.toggle('selected', i === selectedIndex);
+    });
+    selectedTopicIndex.textContent = `#${selectedIndex+1} ✅`;
+  }
+
+  function markUndone() {
+    if (selectedIndex < 0 || selectedIndex >= topics.length) { 
+      alert('Long press on a topic to select it first.'); 
+      return; 
+    }
+    topics[selectedIndex].done = false;
+    saveTopicsToFirebase(currentCategoryId, topics);
+    renderTopics();
+    document.querySelectorAll('.topic-card').forEach((el, i) => {
+      el.classList.toggle('selected', i === selectedIndex);
+    });
+    selectedTopicIndex.textContent = `#${selectedIndex+1} ⏳`;
+  }
+
+  // ---- IMPORT TOPICS ----
+  function importTopics() {
+    const raw = prompt('Paste numbered topics (1. title → explanation) :');
+    if (!raw) return;
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length);
+    const parsed = [];
+    let currentTitle = '', currentExplanation = '';
+    for (let line of lines) {
+      const match = line.match(/^(\d+)[\.\)\-]\s*(.*)/);
+      if (match) {
+        if (currentTitle) {
+          parsed.push({ 
+            title: currentTitle, 
+            explanation: currentExplanation.trim(), 
+            caption: '', 
+            script: '', 
+            done: false 
+          });
+        }
+        currentExplanation = '';
+        const rest = match[2].trim();
+        const arrowIdx = rest.indexOf('→');
+        if (arrowIdx !== -1) {
+          currentTitle = rest.substring(0, arrowIdx).trim();
+          currentExplanation = rest.substring(arrowIdx+1).trim().replace(/^\(/, '').replace(/\)$/, '');
+        } else {
+          currentTitle = rest || line;
+          currentExplanation = '';
+        }
+      } else {
+        if (currentTitle) {
+          const clean = line.replace(/^→\s*/, '').replace(/^\(/, '').replace(/\)$/, '');
+          currentExplanation += (currentExplanation ? ' ' : '') + clean;
+        }
+      }
+    }
+    if (currentTitle) {
+      parsed.push({ 
+        title: currentTitle, 
+        explanation: currentExplanation.trim(), 
+        caption: '', 
+        script: '', 
+        done: false 
+      });
+    }
+    if (parsed.length === 0) { alert('No topics detected.'); return; }
+    if (topics.length > 0 && !confirm('Replace existing topics? (Cancel to append)')) {
+      topics = topics.concat(parsed);
+    } else {
+      topics = parsed;
+    }
+    saveTopicsToFirebase(currentCategoryId, topics);
+    renderTopics();
+    clearSelection();
+  }
+
+  // ---- BINDINGS ----
+  saveBtn.addEventListener('click', saveCurrentTopic);
+  markDoneBtn.addEventListener('click', markDone);
+  markUndoneBtn.addEventListener('click', markUndone);
+  importBtn.addEventListener('click', importTopics);
+
+  // ---- INIT ----
+  // Load readonly state from localStorage
+  readonlyMode = loadReadonlyState();
+  if (readonlyMode) {
+    readonlyToggle.classList.add('active');
+    readonlyToggle.innerHTML = `<span class="material-symbols-rounded" style="font-size:18px;">lock</span> Read Only`;
+  }
+  
+  renderCategories();
+  headerCategoryBadge.textContent = 'A';
+  loadTopicsFromFirebase('A');
+  applyReadonlyMode();
+</script>
+</body>
+</html>
